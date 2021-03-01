@@ -1,19 +1,19 @@
 
-using StructExtender, Test
+using CompositeStructs, Test
 
-@testset "StructExtender" begin
+@testset "CompositeStructs" begin
 
     # tests work by explicilty redefing the @extend-ed struct, which
-    # will be an error if its not exact the same
+    # will be an error if its not exactly the same
         
     # docstring example
     @test_nowarn @eval module $(gensym())
-        using StructExtender
+        using CompositeStructs
         struct Foo{X,Y}
             x :: X
             y :: Y
         end
-        @extends struct Bar{X,Y,Z}
+        @composite struct Bar{X,Y,Z}
             Foo{X,Y}...
             z :: Z
         end
@@ -26,12 +26,12 @@ using StructExtender, Test
 
     # composite type in Foo, swap Y/X
     @test_nowarn @eval module $(gensym())
-        using StructExtender
+        using CompositeStructs
         struct Foo{X<:Real,Y}
             x :: X
             y :: Complex{Y}
         end
-        @extends struct Bar{X,Y,Z}
+        @composite struct Bar{X,Y,Z}
             Foo{Y,X}...
             z :: Z
         end
@@ -44,10 +44,10 @@ using StructExtender, Test
 
     # multiple splices / order
     @test_nowarn @eval module $(gensym())
-        using StructExtender
+        using CompositeStructs
         struct X x end
         struct Z z end
-        @extends struct Bar
+        @composite struct Bar
             X...
             y
             Z...
@@ -61,11 +61,11 @@ using StructExtender, Test
 
     # non-concrete field
     @test_nowarn @eval module $(gensym())
-        using StructExtender
+        using CompositeStructs
         struct Foo{T}
             x :: Array{T,N} where {N}
         end
-        @extends struct Bar{T}
+        @composite struct Bar{T}
             Foo{T}...
             y
         end
@@ -78,11 +78,11 @@ using StructExtender, Test
 
     # mutable structs, with supertype
     @test_nowarn @eval module $(gensym())
-        using StructExtender
+        using CompositeStructs
         mutable struct Foo <: Real
             x
         end
-        @extends mutable struct Bar <: Number
+        @composite mutable struct Bar <: Number
             Foo...
             y
         end

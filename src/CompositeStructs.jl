@@ -1,17 +1,17 @@
-module StructExtender
+module CompositeStructs
 
 using Core: apply_type
 using Base: datatype_fieldtypes, unwrap_unionall
 using Base.Meta: isexpr
 
-export @extends
+export @composite
 
 # given an expression like :(Complex{T}) and a module in which the
 # relevant symbols are defined, reconstruct a type object without
 # calling @eval
 reconstruct_type(__module__, s::Symbol) = getfield(__module__, s)
 function reconstruct_type(__module__, ex)
-    isexpr(ex, :curly) || error("Invalid @extends syntax.")
+    isexpr(ex, :curly) || error("Invalid @composite syntax.")
     foldl((t,x) -> apply_type(t, TypeVar(x)), ex.args[2:end], init=reconstruct_type(__module__,ex.args[1]))
 end
 
@@ -34,7 +34,7 @@ end
 
 """
 
-    @extends [mutable] struct ... end
+    @composite [mutable] struct ... end
 
 Splices the fields of one struct into another. E.g.:
 
@@ -43,7 +43,7 @@ Splices the fields of one struct into another. E.g.:
         y :: Y
     end
 
-    @extends struct Bar{X,Y,Z}
+    @composite struct Bar{X,Y,Z}
         Foo{X,Y}...
         z :: Z
     end
@@ -60,7 +60,7 @@ Spliced types must not have any free type parameters. Multiple types
 can be spliced and in any order. 
 
 """
-macro extends(structdef)
+macro composite(structdef)
     fields = []
     for f in structdef.args[3].args
         isexpr(f, :(...)) ? append!(fields, reconstruct_fields(__module__, f.args[1])) : push!(fields, f)

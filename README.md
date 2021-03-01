@@ -1,7 +1,7 @@
 
-# StructExtender.jl
+# CompositeStructs.jl
 
-![runtests](https://github.com/marius311/StructExtender.jl/workflows/runtests/badge.svg)
+![runtests](https://github.com/marius311/CompositeStructs.jl/workflows/runtests/badge.svg)
 
 Splices the fields of one struct into another. E.g.:
 
@@ -12,7 +12,7 @@ struct Foo{X,Y}
     y :: Y
 end
 
-@extends struct Bar{X,Y,Z}
+@composite struct Bar{X,Y,Z}
     Foo{X,Y}...
     z :: Z
 end
@@ -27,7 +27,22 @@ end
 
 
 Spliced types must not have any free type parameters. Multiple types
-can be spliced and in any order. 
+can be spliced and in any order. Compatible with `Base.@kwdef`, use `@composite @kwdef` if you wish to use the keyword 
+
+```julia
+
+@kwdef struct Foo
+    x = 1
+    y
+end
+
+@composite @kwdef struct Bar
+    Foo...
+    z = 3
+end
+
+Bar(y=2) # returns Bar(1,2,3)
+```
 
 Extending structs like this can mimic inheritance, and can be powerful if combined with giving both the original and extended struct a common abstract supertype (which the user is free to specify if desired, using normal Julia syntax).
 
