@@ -3,7 +3,7 @@ using CompositeStructs, Test
 
 @testset "CompositeStructs" begin
 
-    # tests work by explicilty redefing the @extend-ed struct, which
+    # tests work by explicilty redefing the @composite structs, which
     # will be an error if its not exactly the same
         
     # docstring example
@@ -92,6 +92,40 @@ using CompositeStructs, Test
         end
     end
 
+    # kwdef
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs, Test
+
+        Base.@kwdef struct Child1{T} <: Real
+            x::T = 1
+        end
+        
+        Base.@kwdef struct Child2
+            y
+        end
+
+        @composite Base.@kwdef struct ParentInner{T} <: Number
+            Child1{T}...
+            Child2...
+            z = 3
+            w
+        end
+        
+        @test ParentInner(y=2, w=4) == ParentInner{Int64}(1,2,3,4)
+        @test ParentInner{Float64}(y=2, w=4) == ParentInner{Float64}(1.0,2,3,4)
+        @test ParentInner(x="x", y="y", z="z", w="w") == ParentInner{String}("x", "y", "z", "w")
+
+        Base.@kwdef @composite struct ParentOuter{T} <: Number
+            Child1{T}...
+            Child2...
+            z = 3
+            w
+        end
+        
+        @test ParentOuter(x=1, y=2, w=4) == ParentOuter{Int64}(1,2,3,4)
+
+    end
+    
 end
 
 
