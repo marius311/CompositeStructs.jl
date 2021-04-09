@@ -71,7 +71,6 @@ macro composite(ex)
             push!(constructor_args, _field_name(x))
             push!(parent_body′, _field_decl(x))
         else
-            @show(x)
             push!(parent_body′, x)
         end
     end
