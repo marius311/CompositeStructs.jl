@@ -104,7 +104,7 @@ using CompositeStructs, Test
             y
         end
 
-        @composite Base.@kwdef struct ParentInner{T} <: Number
+        @composite Base.@kwdef struct ParentInner{T<:Any} <: Number
             Child1{T}...
             Child2...
             z = 3
@@ -115,7 +115,7 @@ using CompositeStructs, Test
         @test ParentInner{Float64}(y=2, w=4) == ParentInner{Float64}(1.0,2,3,4)
         @test ParentInner(x="x", y="y", z="z", w="w") == ParentInner{String}("x", "y", "z", "w")
 
-        Base.@kwdef @composite struct ParentOuter{T} <: Number
+        Base.@kwdef @composite struct ParentOuter{T<:Any} <: Number
             Child1{T}...
             Child2...
             z = 3

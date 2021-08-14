@@ -54,6 +54,7 @@ macro composite(ex)
     _field_name(ex) = @capture(ex,name_Symbol::T_=val_) || @capture(ex,name_Symbol::T_) || @capture(ex,name_Symbol=val_) || @capture(ex,name_Symbol) ? name : nothing
     _field_kw(ex)   = @capture(ex,((name_::T_=val_) | (name_=val_))) ? Expr(:kw, name, val) : _field_name(ex)
     _field_decl(ex) = iskwdef && @capture(ex,(decl_ = val_)) ? decl : ex
+    _strip_type_bound(ex) = @capture(ex, T_ <: _) ? T : ex
 
     for x in parent_body
         if @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
@@ -88,10 +89,11 @@ macro composite(ex)
             end
         end)
         if ParentTypeArgs!=nothing
+            ParentTypeArgsStripped = map(_strip_type_bound, ParentTypeArgs)
             push!(ret.args, quote
-                function $ParentType(;$(_field_kw.(explicit_parent_fields)...), kw...) where {$(ParentTypeArgs...)}
+                function $ParentName{$(ParentTypeArgsStripped...)}(;$(_field_kw.(explicit_parent_fields)...), kw...) where {$(ParentTypeArgs...)}
                     $(concrete_child_constructors...)
-                    $ParentType($(constructor_args...))
+                    $ParentName{$(ParentTypeArgsStripped...)}($(constructor_args...))
                 end
             end)
         end
