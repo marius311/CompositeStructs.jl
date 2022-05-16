@@ -151,15 +151,7 @@ using CompositeStructs, Test
     end
 
 
-
-
-
-
-
-
-
-
-    # kwdef
+    # with_kw
     @test_nowarn @eval module $(gensym())
         using CompositeStructs, Parameters, Test
 
@@ -218,14 +210,6 @@ using CompositeStructs, Test
         end
 
     end
-
-
-
-
-
-
-
-
     
 end
 
