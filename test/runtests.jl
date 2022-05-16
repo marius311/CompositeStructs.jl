@@ -150,6 +150,67 @@ using CompositeStructs, Test
 
     end
 
+
+    # with_kw
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs, Parameters, Test
+
+        @with_kw struct Child1{T} <: Real
+            x::T = 1
+        end
+        
+        @with_kw struct Child2
+            y
+        end
+
+        @composite @with_kw struct ParentInner{T<:Any} <: Number
+            Child1{T}...
+            Child2...
+            z = 3
+            w
+        end
+        
+        @test ParentInner(y=2, w=4) == ParentInner{Int64}(1,2,3,4)
+        @test ParentInner{Float64}(y=2, w=4) == ParentInner{Float64}(1.0,2,3,4)
+        @test ParentInner(x="x", y="y", z="z", w="w") == ParentInner{String}("x", "y", "z", "w")
+
+        # This test fails, but this apppears to be not really severe.
+        """
+            @with_kw  @composite struct ParentOuter{T<:Any} <: Number
+                Child1{T}...
+            Child2...
+                z = 3
+                w
+            end
+            
+            @test ParentOuter(x=1, y=2, w=4) == ParentOuter{Int64}(1,2,3,4)
+        """
+    end
+
+    # type arguments which are constants
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs, Parameters
+
+        @with_kw mutable struct Foo{T}
+            a :: Vector{Float64}
+            b :: Val{:x}
+            c :: NamedTuple{(:x,:y), S} where S <: Tuple
+            d :: Vector{T}
+        end
+
+        @composite @with_kw mutable struct Bar{T}
+            Foo{T}...
+        end
+
+        mutable struct Bar{T}
+            a :: Vector{Float64}
+            b :: Val{:x}
+            c :: NamedTuple{(:x,:y), S} where S <: Tuple
+            d :: Vector{T}
+        end
+
+    end
+    
 end
 
 

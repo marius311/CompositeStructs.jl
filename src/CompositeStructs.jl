@@ -37,7 +37,9 @@ end
 macro composite(ex)
 
     if !(
-        ((iskwdef = @capture(ex, @kwdef(structdef_) | Base.@kwdef(structdef_))) || @capture(ex, structdef_)) && 
+         ((iskwdef = @capture(ex, @kwdef(structdef_) | Base.@kwdef(structdef_)))
+         || (iskwdef = @capture(ex, @with_kw(structdef_) | Parameters.@with_kw(structdef_)))
+         || @capture(ex, structdef_)) && 
         @capture(structdef, struct ParentTypeDecl_ parent_body__ end | mutable struct ParentTypeDecl_ parent_body__ end) &&
         @capture(ParentTypeDecl, (ParentType_ <: _) | ParentType_) &&
         @capture(ParentType, ParentName_{ParentTypeArgs__} | ParentName_)
