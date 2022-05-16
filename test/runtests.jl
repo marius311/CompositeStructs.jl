@@ -125,7 +125,31 @@ using CompositeStructs, Test
         @test ParentOuter(x=1, y=2, w=4) == ParentOuter{Int64}(1,2,3,4)
 
     end
-    
+
+    # type arguments which are constants
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs
+
+        Base.@kwdef mutable struct Foo{T}
+            a :: Vector{Float64}
+            b :: Val{:x}
+            c :: NamedTuple{(:x,:y), S} where S <: Tuple
+            d :: Vector{T}
+        end
+
+        @composite Base.@kwdef mutable struct Bar{T}
+            Foo{T}...
+        end
+
+        mutable struct Bar{T}
+            a :: Vector{Float64}
+            b :: Val{:x}
+            c :: NamedTuple{(:x,:y), S} where S <: Tuple
+            d :: Vector{T}
+        end
+
+    end
+
 end
 
 
