@@ -125,7 +125,22 @@ using CompositeStructs, Test
         @test ParentOuter(x=1, y=2, w=4) == ParentOuter{Int64}(1,2,3,4)
 
     end
-    
+
+    # mutable structs, with @kwdef and default array size
+    @test_nowarn @eval module $(gensym())
+    using CompositeStructs
+    Base.@kwdef mutable struct FOO
+	n::Int=10
+	a::Vector{Float64}=zeros(n)
+    end
+
+    @composite Base.@kwdef mutable struct ExtFOO
+	   FOO...
+	b=2
+    end
+
+    end
+
 end
 
 
