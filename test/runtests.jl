@@ -126,18 +126,27 @@ using CompositeStructs, Test
 
     end
 
-    # mutable structs, with @kwdef and default array size
+    # type arguments which are constants
     @test_nowarn @eval module $(gensym())
-    using CompositeStructs
-    Base.@kwdef mutable struct FOO
-	n::Int=10
-	a::Vector{Float64}=zeros(n)
-    end
+        using CompositeStructs
 
-    @composite Base.@kwdef mutable struct ExtFOO
-	   FOO...
-	b=2
-    end
+        Base.@kwdef mutable struct Foo{T}
+            a :: Vector{Float64}
+            b :: Val{:x}
+            c :: NamedTuple{(:x,:y), S} where S <: Tuple
+            d :: Vector{T}
+        end
+
+        @composite Base.@kwdef mutable struct Bar{T}
+            Foo{T}...
+        end
+
+        mutable struct Bar{T}
+            a :: Vector{Float64}
+            b :: Val{:x}
+            c :: NamedTuple{(:x,:y), S} where S <: Tuple
+            d :: Vector{T}
+        end
 
     end
 

@@ -18,9 +18,9 @@ end
 # convert a type or UnionAll back to an expression
 to_expr(t::DataType) = isempty(t.parameters) ? t.name.name : :($(t.name.name){$(map(to_expr,t.parameters)...)})
 to_expr(t::TypeVar) = t.name
-to_expr(t::Symbol) = t
+to_expr(t::Symbol) = QuoteNode(t)
 to_expr(t::UnionAll) = :($(to_expr(t.body)) where {$(t.var.lb) <: $(t.var.name) <: $(t.var.ub)})
-to_expr(t::Number) = t
+to_expr(t) = t
 
 # given an expression like :(Complex{T}) and a module in which the
 # relevant symbols are defined, return an array with the struct's
