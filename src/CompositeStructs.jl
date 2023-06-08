@@ -47,6 +47,10 @@ macro composite(ex)
 
     generic_child_constructors = []
     concrete_child_constructors = []
+    
+    copy_constructor_args = []
+    constructor_forward = []
+    
     parent_body′ = []
     explicit_parent_fields = []
     constructor_args = []
@@ -65,12 +69,16 @@ macro composite(ex)
             child_instance = gensym()
             push!(generic_child_constructors,  :($child_instance = $ChildName(; filter(((k,_),)->(k in $child_field_names), kw)...)))
             push!(concrete_child_constructors, :($child_instance = $ChildType(; filter(((k,_),)->(k in $child_field_names), kw)...)))
+            push!(copy_constructor_args, :($child_instance::$ChildType))
             for f in child_field_names
                 push!(constructor_args, :($child_instance.$f))
+                push!(constructor_forward, :($child_instance.$f))
             end
         elseif _field_name(x) != nothing
             push!(explicit_parent_fields, x)
             push!(constructor_args, _field_name(x))
+            push!(copy_constructor_args, _field_name(x))
+            push!(constructor_forward, _field_name(x))
             push!(parent_body′, _field_decl(x))
         else
             push!(parent_body′, x)
@@ -79,10 +87,22 @@ macro composite(ex)
 
     structdef.args[3] = :(begin $(parent_body′...) end)
 
-    if !iskwdef
-        esc(structdef)
-    else
-        ret = quote Core.@__doc__ $structdef end
+    ret = quote Core.@__doc__ $structdef end
+    push!(ret.args, quote
+        function $ParentName($(copy_constructor_args...))
+            $ParentName($(constructor_forward...))
+        end
+    end)
+    if ParentTypeArgs!=nothing
+        ParentTypeArgsStripped = map(_strip_type_bound, ParentTypeArgs)
+        push!(ret.args, quote
+            function $ParentName{$(ParentTypeArgsStripped...)}(copy_constructor_args...) where {$(ParentTypeArgs...)}
+                $ParentName{$(ParentTypeArgsStripped...)}($(constructor_forward...))
+            end
+        end)
+    end
+    
+    if iskwdef
         push!(ret.args, quote
             function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
                 $(generic_child_constructors...)
@@ -98,8 +118,8 @@ macro composite(ex)
                 end
             end)
         end
-        esc(ret)
     end
+    esc(ret)
 
 end
 
