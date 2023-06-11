@@ -150,6 +150,38 @@ using CompositeStructs, Test
 
     end
 
+    # issue #9
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs
+
+        module OtherMod
+            struct NonParametric
+                x
+            end
+            struct Parameteric{T}
+                x :: T
+            end
+        end
+
+        using .OtherMod
+
+        struct Foo{T}
+            t :: OtherMod.NonParametric
+            s :: OtherMod.Parameteric{T}
+        end
+
+        @composite struct Foo{T}
+            Foo{T}...
+        end
+
+        struct Foo{T}
+            t :: OtherMod.NonParametric
+            s :: OtherMod.Parameteric{T}
+        end
+
+    end
+      
+
 end
 
 

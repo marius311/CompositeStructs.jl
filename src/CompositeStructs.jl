@@ -16,7 +16,7 @@ function reconstruct_type(__module__, ex)
 end
 
 # convert a type or UnionAll back to an expression
-to_expr(t::DataType) = isempty(t.parameters) ? t.name.name : :($(t.name.name){$(map(to_expr,t.parameters)...)})
+to_expr(t::DataType) = isempty(t.parameters) ? :($(t.name.module).$(t.name.name)) : :($(t.name.module).$(t.name.name){$(map(to_expr,t.parameters)...)})
 to_expr(t::TypeVar) = t.name
 to_expr(t::Symbol) = QuoteNode(t)
 to_expr(t::UnionAll) = :($(to_expr(t.body)) where {$(t.var.lb) <: $(t.var.name) <: $(t.var.ub)})
