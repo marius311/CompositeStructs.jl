@@ -88,15 +88,16 @@ macro composite(ex)
     structdef.args[3] = :(begin $(parent_body′...) end)
 
     ret = quote Core.@__doc__ $structdef end
-    push!(ret.args, quote
-        function $ParentName($(copy_constructor_args...))
-            $ParentName($(constructor_forward...))
-        end
-    end)
-    if ParentTypeArgs!=nothing
+    if ParentTypeArgs == nothing
+	    push!(ret.args, quote
+	        function $ParentName($(copy_constructor_args...))
+	            $ParentName($(constructor_forward...))
+	        end
+	    end)
+    else 
         ParentTypeArgsStripped = map(_strip_type_bound, ParentTypeArgs)
         push!(ret.args, quote
-            function $ParentName{$(ParentTypeArgsStripped...)}(copy_constructor_args...) where {$(ParentTypeArgs...)}
+            function $ParentName{$(ParentTypeArgsStripped...)}($(copy_constructor_args...)) where {$(ParentTypeArgs...)}
                 $ParentName{$(ParentTypeArgsStripped...)}($(constructor_forward...))
             end
         end)
