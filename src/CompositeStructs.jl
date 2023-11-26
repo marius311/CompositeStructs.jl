@@ -3,7 +3,8 @@ module CompositeStructs
 using Core: apply_type
 using Base: datatype_fieldtypes, unwrap_unionall
 using MacroTools
-
+using Base.Docs: Binding, aliasof, modules,meta
+using Base.Iterators: flatten
 export @composite
 
 # given an expression like :(Complex{T}) and a module in which the
@@ -12,6 +13,7 @@ export @composite
 reconstruct_type(__module__, s::Symbol) = getfield(__module__, s)
 function reconstruct_type(__module__, ex)
     isexpr(ex, :curly) || error("Invalid @composite syntax.")
+    println(ex)
     foldl((t,x) -> apply_type(t, TypeVar(x)), ex.args[2:end], init=reconstruct_type(__module__,ex.args[1]))
 end
 
@@ -20,7 +22,30 @@ to_expr(t::DataType) = isempty(t.parameters) ? :($(t.name.module).$(t.name.name)
 to_expr(t::TypeVar) = t.name
 to_expr(t::Symbol) = QuoteNode(t)
 to_expr(t::UnionAll) = :($(to_expr(t.body)) where {$(t.var.lb) <: $(t.var.name) <: $(t.var.ub)})
-to_expr(t) = t
+to_expr(t)= t
+
+# Adapted from https://github.com/JuliaLang/julia/blob/3db0cc20eba14978c45cd91f05a9b89b1dc0e38a/stdlib/REPL/src/docview.jl#L562-L588
+# Thanks https://discourse.julialang.org/t/accessing-docstring-of-a-field/4830/7 !
+function fielddoc(binding::Binding, field::Symbol)
+    for mod in modules
+        dict = meta(mod; autoinit=false)
+        isnothing(dict) && continue
+        if haskey(dict, binding)
+            multidoc = dict[binding]
+            if haskey(multidoc.docs, Union{})
+                fields = multidoc.docs[Union{}].data[:fields]
+                if haskey(fields, field)
+                    doc = fields[field]
+                    return doc
+                end
+            end
+        end
+    end
+ ""
+end
+
+fielddoc(object, field::Symbol) = fielddoc(aliasof(object, typeof(object)), field)
+fielddocs(object)=map(sym->fielddoc(object,sym), fieldnames(object))
 
 # given an expression like :(Complex{T}) and a module in which the
 # relevant symbols are defined, return an array with the struct's
@@ -28,9 +53,8 @@ to_expr(t) = t
 function reconstruct_fields(__module__, ex)
     t = reconstruct_type(__module__, ex)
     (t isa UnionAll) && error("Spliced type $ex must not have any free type parameters.")
-    map(zip(fieldnames(t),datatype_fieldtypes(t))) do (x,T)
-        :($x::$(to_expr(T)))
-    end
+    fnames=fieldnames(t)
+    flatten(zip(fielddocs(t),map( xT->:($(first(xT))::$(to_expr(last(xT)))) , zip(fieldnames(t),datatype_fieldtypes(t)))))
 end
 
 @doc join(readlines(joinpath(@__DIR__, "../README.md"))[6:end], "\n") 
@@ -60,7 +84,7 @@ macro composite(ex)
     for x in parent_body
         if @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
             child_fields = (reconstruct_fields(__module__, ChildType)...,)
-            child_field_names = _field_name.(child_fields)
+            child_field_names = filter(x->!isnothing(x),_field_name.(child_fields))
             append!(parent_body′, child_fields)
             child_instance = gensym()
             push!(generic_child_constructors,  :($child_instance = $ChildName(; filter(((k,_),)->(k in $child_field_names), kw)...)))
@@ -76,13 +100,13 @@ macro composite(ex)
             push!(parent_body′, x)
         end
     end
-
     structdef.args[3] = :(begin $(parent_body′...) end)
 
     if !iskwdef
         esc(structdef)
     else
         ret = quote Core.@__doc__ $structdef end
+        
         push!(ret.args, quote
             function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
                 $(generic_child_constructors...)
