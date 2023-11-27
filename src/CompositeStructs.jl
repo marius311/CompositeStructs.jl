@@ -83,7 +83,7 @@ macro composite(ex)
     for x in parent_body
         if @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
             child_fields = (reconstruct_fields(__module__, ChildType)...,)
-            child_field_names = filter(x->!isnothing(x),_field_name.(child_fields))
+            child_field_names = filter(x->!isnothing(x),[_field_name.(child_fields)...])
             append!(parent_body′, child_fields)
             child_instance = gensym()
             push!(generic_child_constructors,  :($child_instance = $ChildName(; filter(((k,_),)->(k in $child_field_names), kw)...)))
