@@ -1,5 +1,5 @@
 
-using CompositeStructs, Test
+using CompositeStructs, Test, DocStringExtensions
 
 @testset "CompositeStructs" begin
 
@@ -181,7 +181,35 @@ using CompositeStructs, Test
 
     end
       
+    # docstring extension handling
+    # this just tests that the code runs, but not the result in the docstring
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs
+        using DocStringExtensions
+        using Test
+        """
+        $(TYPEDEF)
+        $(TYPEDFIELDS)
+        """
+        struct Foo{X,Y}
+            "foo_x"
+            x :: X
+            "foo_y"
+            y :: Y
+        end
+        """
+        $(TYPEDEF)
+        $(TYPEDFIELDS)
+        """
+        @composite struct Bar{X,Y,Z}
+            Foo{X,Y}...
+            "bar_z"
+            z :: Z
+        end
+        @test occursin("foo_x", string(@doc Bar))
+    end
 
+    
 end
 
 
