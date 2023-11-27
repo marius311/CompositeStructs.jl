@@ -28,7 +28,7 @@ to_expr(t)= t
 # Thanks https://discourse.julialang.org/t/accessing-docstring-of-a-field/4830/7 !
 function fielddoc(binding::Binding, field::Symbol)
     for mod in modules
-        dict = meta(mod; autoinit=false)
+        dict = meta(mod)
         isnothing(dict) && continue
         if haskey(dict, binding)
             multidoc = dict[binding]
@@ -53,7 +53,6 @@ fielddocs(object)=map(sym->fielddoc(object,sym), fieldnames(object))
 function reconstruct_fields(__module__, ex)
     t = reconstruct_type(__module__, ex)
     (t isa UnionAll) && error("Spliced type $ex must not have any free type parameters.")
-    fnames=fieldnames(t)
     flatten(zip(fielddocs(t),map( xT->:($(first(xT))::$(to_expr(last(xT)))) , zip(fieldnames(t),datatype_fieldtypes(t)))))
 end
 
