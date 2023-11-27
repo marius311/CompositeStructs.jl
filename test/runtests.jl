@@ -206,6 +206,8 @@ using CompositeStructs, Test, DocStringExtensions
             z :: Z
         end
         @test occursin("foo_x", string(@doc Bar))
+        @test occursin("foo_y", string(@doc Bar))
+        @test occursin("bar_z", string(@doc Bar))
     end
 
     
@@ -234,6 +236,8 @@ using CompositeStructs, Test, DocStringExtensions
             z :: Int = 3
         end
         @test occursin("foo_x", string(@doc Bar))
+        @test occursin("foo_y", string(@doc Bar))
+        @test occursin("bar_z", string(@doc Bar))
     end
 
     
