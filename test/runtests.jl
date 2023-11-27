@@ -182,7 +182,6 @@ using CompositeStructs, Test, DocStringExtensions
     end
       
     # docstring extension handling
-    # this just tests that the code runs, but not the result in the docstring
     @test_nowarn @eval module $(gensym())
         using CompositeStructs
         using DocStringExtensions
@@ -205,6 +204,34 @@ using CompositeStructs, Test, DocStringExtensions
             Foo{X,Y}...
             "bar_z"
             z :: Z
+        end
+        @test occursin("foo_x", string(@doc Bar))
+    end
+
+    
+    # docstring extension handling
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs
+        using DocStringExtensions
+        using Test
+        """
+        $(TYPEDEF)
+        $(TYPEDFIELDS)
+        """
+        Base.@kwdef struct Foo
+            "foo_x"
+            x :: Int = 1
+            "foo_y"
+            y :: Int = 2
+        end
+        """
+        $(TYPEDEF)
+        $(TYPEDFIELDS)
+        """
+        @composite struct Bar
+            Foo...
+            "bar_z"
+            z :: Int = 3
         end
         @test occursin("foo_x", string(@doc Bar))
     end
