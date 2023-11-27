@@ -4,7 +4,10 @@ using CompositeStructs, Test
 @testset "CompositeStructs" begin
 
     # tests work by explicilty redefing the @composite structs, which
-    # will be an error if its not exactly the same
+    # will be an error if its not exactly the same. 
+    # the `_() = nothing` is to prevent method redefinition warnings 
+    # stemming from default constructors
+
         
     # docstring example
     @test_nowarn @eval module $(gensym())
@@ -21,6 +24,7 @@ using CompositeStructs, Test
             x :: X
             y :: Y
             z :: Z
+            _() = nothing
         end
     end
 
@@ -39,6 +43,7 @@ using CompositeStructs, Test
             x :: Y
             y :: Complex{X}
             z :: Z
+            _() = nothing
         end
     end
 
@@ -56,6 +61,7 @@ using CompositeStructs, Test
             x
             y
             z
+            _() = nothing
         end
     end
 
@@ -72,6 +78,7 @@ using CompositeStructs, Test
         struct Bar{T}
             x :: Array{T,N} where {N}
             y
+            _() = nothing
         end
     end
 
@@ -89,6 +96,7 @@ using CompositeStructs, Test
         mutable struct Bar <: Number
             x
             y
+            _() = nothing
         end
     end
 
@@ -146,6 +154,7 @@ using CompositeStructs, Test
             b :: Val{:x}
             c :: NamedTuple{(:x,:y), S} where S <: Tuple
             d :: Vector{T}
+            _() = nothing
         end
 
     end
@@ -170,13 +179,14 @@ using CompositeStructs, Test
             s :: OtherMod.Parameteric{T}
         end
 
-        @composite struct Foo{T}
+        @composite struct Bar{T}
             Foo{T}...
         end
 
-        struct Foo{T}
+        struct Bar{T}
             t :: OtherMod.NonParametric
             s :: OtherMod.Parameteric{T}
+            _() = nothing
         end
 
     end
