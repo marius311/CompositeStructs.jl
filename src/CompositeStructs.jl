@@ -84,7 +84,7 @@ macro composite(ex)
     for x in parent_body
         if !(x isa String) && @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
             child_fields_and_docstrings = (reconstruct_fields_and_docstrings(__module__, ChildType)...,)
-            child_field_names = _field_name.(filter(x -> !(x isa String), child_fields_and_docstrings))
+            child_field_names = _field_name.(filter(x -> !(x isa String), collect(child_fields_and_docstrings)))
             append!(parent_body′, child_fields_and_docstrings)
             child_instance = gensym()
             push!(generic_child_constructors,  :($child_instance = $ChildName(; filter(((k,_),)->(k in $child_field_names), kw)...)))
