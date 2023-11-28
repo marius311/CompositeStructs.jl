@@ -47,14 +47,14 @@ fielddocs(object) = map(sym->fielddoc(object,sym), fieldnames(object))
 
 # given an expression like :(Complex{T}) and a module in which the
 # relevant symbols are defined, return an array with the struct's
-# fields and their type signatures, in this case: [:(re::T), (im::T)]
-function reconstruct_fields(__module__, ex)
+# fields (with docstrings if any) and their type signatures, in this case: [:(re::T), (im::T)]
+function reconstruct_fields_and_docstrings(__module__, ex)
     t = reconstruct_type(__module__, ex)
     (t isa UnionAll) && error("Spliced type $ex must not have any free type parameters.")
     fields = map(zip(fieldnames(t),datatype_fieldtypes(t))) do (x,T)
         :($x::$(to_expr(T)))
     end
-    fields_and_docs = filter(x->!isnothing(x), collect(flatten(zip(fielddocs(t), fields))))
+    fields_and_docstrings = filter(x->!isnothing(x), collect(flatten(zip(fielddocs(t), fields))))
 end
 
 @doc join(readlines(joinpath(@__DIR__, "../README.md"))[6:end], "\n") 
@@ -82,10 +82,10 @@ macro composite(ex)
     _strip_type_bound(ex) = @capture(ex, T_ <: _) ? T : ex
 
     for x in parent_body
-        if @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
-            child_fields = (reconstruct_fields(__module__, ChildType)...,)
-            child_field_names = _field_name.(child_fields)
-            append!(parent_body′, child_fields)
+        if !(x isa String) && @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
+            child_fields_and_docstrings = (reconstruct_fields_and_docstrings(__module__, ChildType)...,)
+            child_field_names = _field_name.(filter(x -> !(x isa String), child_fields_and_docstrings))
+            append!(parent_body′, child_fields_and_docstrings)
             child_instance = gensym()
             push!(generic_child_constructors,  :($child_instance = $ChildName(; filter(((k,_),)->(k in $child_field_names), kw)...)))
             push!(concrete_child_constructors, :($child_instance = $ChildType(; filter(((k,_),)->(k in $child_field_names), kw)...)))

@@ -190,54 +190,25 @@ using CompositeStructs, Test, DocStringExtensions
         $(TYPEDEF)
         $(TYPEDFIELDS)
         """
-        struct Foo{X,Y}
+        Base.@kwdef struct Foo{X,Y}
             "foo_x"
-            x :: X
+            x :: X = 1
             "foo_y"
-            y :: Y
+            y :: Y = 2
         end
         """
         $(TYPEDEF)
         $(TYPEDFIELDS)
         """
-        @composite struct Bar{X,Y,Z}
+        @composite Base.@kwdef struct Bar{X,Y,Z}
             Foo{X,Y}...
             "bar_z"
-            z :: Z
+            z :: Z = 3
         end
         @test occursin("foo_x", string(@doc Bar))
         @test occursin("foo_y", string(@doc Bar))
         @test occursin("bar_z", string(@doc Bar))
-    end
-
-    
-    # docstring extension handling
-    @test_nowarn @eval module $(gensym())
-        using CompositeStructs
-        using DocStringExtensions
-        using Test
-        """
-        $(TYPEDEF)
-        $(TYPEDFIELDS)
-        """
-        Base.@kwdef struct Foo
-            "foo_x"
-            x :: Int = 1
-            "foo_y"
-            y :: Int = 2
-        end
-        """
-        $(TYPEDEF)
-        $(TYPEDFIELDS)
-        """
-        @composite struct Bar
-            Foo...
-            "bar_z"
-            z :: Int = 3
-        end
-        @test occursin("foo_x", string(@doc Bar))
-        @test occursin("foo_y", string(@doc Bar))
-        @test occursin("bar_z", string(@doc Bar))
+        @test Bar() == Bar(1,2,3)
     end
 
     
