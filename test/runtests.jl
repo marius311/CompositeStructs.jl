@@ -193,9 +193,7 @@ using CompositeStructs, Test, DocStringExtensions
       
     # docstring extension handling
     @test_nowarn @eval module $(gensym())
-        using CompositeStructs
-        using DocStringExtensions
-        using Test
+        using CompositeStructs, DocStringExtensions, Test
         """
         $(TYPEDEF)
         $(TYPEDFIELDS)
@@ -221,6 +219,20 @@ using CompositeStructs, Test, DocStringExtensions
         @test Bar() == Bar(1,2,3)
     end
 
+
+    # issue #11, nested type vars
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs, Test
+
+        struct Foo{T}
+            x :: T
+        end
+        @composite struct Bar{S}
+            Foo{Vector{S}}...
+        end
+        @test Bar([1,2,3]).x == [1,2,3]
+
+    end
     
 end
 
