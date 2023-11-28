@@ -118,7 +118,7 @@ macro composite(ex)
                 $ParentName($(constructor_args...))
             end
         end)
-        if ParentTypeArgs!=nothing
+        if !isempty(ParentTypeArgs)
             push!(ret.args, quote
                 function $ParentName{$(ParentTypeArgsStripped...)}(;$(_field_kw.(explicit_parent_fields)...), kw...) where {$(ParentTypeArgs...)}
                     $(concrete_child_constructors...)
