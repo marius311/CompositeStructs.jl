@@ -1,5 +1,5 @@
 
-using CompositeStructs, Test
+using CompositeStructs, Test, DocStringExtensions
 
 @testset "CompositeStructs" begin
 
@@ -191,7 +191,37 @@ using CompositeStructs, Test
 
     end
       
+    # docstring extension handling
+    @test_nowarn @eval module $(gensym())
+        using CompositeStructs
+        using DocStringExtensions
+        using Test
+        """
+        $(TYPEDEF)
+        $(TYPEDFIELDS)
+        """
+        Base.@kwdef struct Foo{X,Y}
+            "foo_x"
+            x :: X = 1
+            "foo_y"
+            y :: Y = 2
+        end
+        """
+        $(TYPEDEF)
+        $(TYPEDFIELDS)
+        """
+        @composite Base.@kwdef struct Bar{X,Y,Z}
+            Foo{X,Y}...
+            "bar_z"
+            z :: Z = 3
+        end
+        @test occursin("foo_x", string(@doc Bar))
+        @test occursin("foo_y", string(@doc Bar))
+        @test occursin("bar_z", string(@doc Bar))
+        @test Bar() == Bar(1,2,3)
+    end
 
+    
 end
 
 
