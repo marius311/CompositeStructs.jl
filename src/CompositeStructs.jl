@@ -113,13 +113,20 @@ macro composite(ex)
     else
         ret = quote Core.@__doc__ $structdef end
         
-        push!(ret.args, quote
-            function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
-                $(generic_child_constructors...)
-                $ParentName($(constructor_args...))
-            end
-        end)
-        if !isempty(ParentTypeArgs)
+        if isempty(ParentTypeArgs)
+	        push!(ret.args, quote
+	            function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
+	                $(concrete_child_constructors...)
+	                $ParentName($(constructor_args...))
+	            end
+	        end)
+	    else
+	        push!(ret.args, quote
+	            function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
+	                $(generic_child_constructors...)
+	                $ParentName($(constructor_args...))
+	            end
+	        end)
             push!(ret.args, quote
                 function $ParentName{$(ParentTypeArgsStripped...)}(;$(_field_kw.(explicit_parent_fields)...), kw...) where {$(ParentTypeArgs...)}
                     $(concrete_child_constructors...)
