@@ -79,6 +79,7 @@ macro composite(ex)
         ParentTypeArgs = []
     end
     ParentTypeArgsStripped = map(_strip_type_bound, ParentTypeArgs)
+    ParentTypeAndTypeArgsStripped = [ ParentTypeArgsStripped; ParentName ]
 
     generic_child_constructors = []
     concrete_child_constructors = []
@@ -88,7 +89,7 @@ macro composite(ex)
 
     for x in parent_body
         if !(x isa String) && @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
-            child_fields_and_docstrings = (reconstruct_fields_and_docstrings(__module__, ParentTypeArgsStripped, ChildType)...,)
+            child_fields_and_docstrings = (reconstruct_fields_and_docstrings(__module__, ParentTypeAndTypeArgsStripped, ChildType)...,)
             child_field_names = _field_name.(filter(x -> !(x isa String), collect(child_fields_and_docstrings)))
             append!(parent_body′, child_fields_and_docstrings)
             child_instance = gensym()
