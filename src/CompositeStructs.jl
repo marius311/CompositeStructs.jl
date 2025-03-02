@@ -79,6 +79,7 @@ macro composite(ex)
         ParentTypeArgs = []
     end
     ParentTypeArgsStripped = map(_strip_type_bound, ParentTypeArgs)
+    ParentTypeAndTypeArgsStripped = [ ParentTypeArgsStripped; ParentName ]
 
     generic_child_constructors = []
     concrete_child_constructors = []
@@ -88,7 +89,7 @@ macro composite(ex)
 
     for x in parent_body
         if !(x isa String) && @capture(x, ChildType_...) && @capture(ChildType, ChildName_{__} | ChildName_)
-            child_fields_and_docstrings = (reconstruct_fields_and_docstrings(__module__, ParentTypeArgsStripped, ChildType)...,)
+            child_fields_and_docstrings = (reconstruct_fields_and_docstrings(__module__, ParentTypeAndTypeArgsStripped, ChildType)...,)
             child_field_names = _field_name.(filter(x -> !(x isa String), collect(child_fields_and_docstrings)))
             append!(parent_body′, child_fields_and_docstrings)
             child_instance = gensym()
@@ -112,13 +113,20 @@ macro composite(ex)
     else
         ret = quote Core.@__doc__ $structdef end
         
-        push!(ret.args, quote
-            function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
-                $(generic_child_constructors...)
-                $ParentName($(constructor_args...))
-            end
-        end)
-        if !isempty(ParentTypeArgs)
+        if isempty(ParentTypeArgs)
+	        push!(ret.args, quote
+	            function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
+	                $(concrete_child_constructors...)
+	                $ParentName($(constructor_args...))
+	            end
+	        end)
+	    else
+	        push!(ret.args, quote
+	            function $ParentName(;$(_field_kw.(explicit_parent_fields)...), kw...)
+	                $(generic_child_constructors...)
+	                $ParentName($(constructor_args...))
+	            end
+	        end)
             push!(ret.args, quote
                 function $ParentName{$(ParentTypeArgsStripped...)}(;$(_field_kw.(explicit_parent_fields)...), kw...) where {$(ParentTypeArgs...)}
                     $(concrete_child_constructors...)
